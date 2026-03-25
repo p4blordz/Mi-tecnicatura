@@ -175,6 +175,7 @@ export default function MateriaDetailPage() {
           <ResumenGenerator
             materias={[materia]}
             archivos={archivos}
+            clases={clases}
             onGenerar={generarYGuardar}
             generating={generating}
           />
@@ -214,14 +215,13 @@ function ClaseForm({ onSubmit, nextNumero }) {
           />
         </div>
         <div className="md:col-span-2">
-          <label className="block text-xs font-medium text-gray-600 mb-1">Titulo *</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Titulo</label>
           <input
             type="text"
             value={form.titulo}
             onChange={(e) => update('titulo', e.target.value)}
-            required
             className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Ej: Incoterms 2020"
+            placeholder="Ej: Incoterms 2020 (opcional)"
           />
         </div>
       </div>

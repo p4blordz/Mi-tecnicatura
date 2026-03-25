@@ -86,3 +86,14 @@ export async function generarResumen(texto, tipo = 'resumen') {
 
   return data.choices[0].message.content
 }
+
+export async function obtenerTranscripcion(videoUrl) {
+  const response = await fetch(`/api/transcript?url=${encodeURIComponent(videoUrl)}`)
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Error al obtener la transcripcion')
+  }
+
+  return data.text
+}

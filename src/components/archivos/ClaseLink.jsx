@@ -19,8 +19,8 @@ export default function ClaseLink({ clase, onToggleVisto, onDelete }) {
 
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-medium ${clase.visto ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
-          {clase.numero_clase && `Clase ${clase.numero_clase} - `}
-          {clase.titulo}
+          Clase {clase.numero_clase || '?'}
+          {clase.titulo && ` - ${clase.titulo}`}
         </p>
         <div className="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
           {clase.fecha && (
