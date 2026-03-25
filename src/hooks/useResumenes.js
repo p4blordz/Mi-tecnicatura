@@ -50,7 +50,7 @@ export function useResumenes(materiaId = null) {
           titulo: titulo || `Resumen - ${new Date().toLocaleDateString('es-AR')}`,
           contenido_original: texto,
           resumen,
-          modelo_ia: 'gemini-2.0-flash',
+          modelo_ia: 'llama-3.1-8b-instant',
         })
         .select('*, materias(nombre)')
         .single()
