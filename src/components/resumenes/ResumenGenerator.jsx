@@ -25,17 +25,24 @@ export default function ResumenGenerator({ materias = [], archivos = [], clases 
     setArchivoSeleccionado({ id: `clase-${clase.id}`, tipo: 'video', nombre_original: clase.titulo || `Clase ${clase.numero_clase}` })
     setTitulo(clase.titulo ? `Clase ${clase.numero_clase} - ${clase.titulo}` : `Clase ${clase.numero_clase}`)
 
-    setExtrayendo(true)
-    try {
-      const transcripcion = await obtenerTranscripcion(clase.link_video)
-      setTexto(transcripcion)
-      toast.success('Transcripcion extraida del video')
-    } catch (err) {
-      toast.error(err.message)
-      // Open video so user can try manually
+    const esDrive = clase.link_video.includes('drive.google.com')
+    const esYoutube = clase.link_video.includes('youtube.com') || clase.link_video.includes('youtu.be')
+
+    if (esYoutube) {
+      setExtrayendo(true)
+      try {
+        const transcripcion = await obtenerTranscripcion(clase.link_video)
+        setTexto(transcripcion)
+        toast.success('Transcripcion extraida del video')
+      } catch (err) {
+        toast.error(err.message)
+        window.open(clase.link_video, '_blank')
+      }
+      setExtrayendo(false)
+    } else {
+      // Google Drive or other - open directly for manual copy
       window.open(clase.link_video, '_blank')
     }
-    setExtrayendo(false)
   }
 
   const handlePasteContent = async () => {
@@ -124,7 +131,7 @@ export default function ResumenGenerator({ materias = [], archivos = [], clases 
                       <p className="text-sm font-medium text-gray-800 truncate">
                         Clase {clase.numero_clase}{clase.titulo && ` - ${clase.titulo}`}
                       </p>
-                      <p className="text-xs text-gray-400">Extrae transcripcion automaticamente</p>
+                      <p className="text-xs text-gray-400">Click para abrir y copiar transcripcion</p>
                     </div>
                   </button>
                 ))}
@@ -179,11 +186,16 @@ export default function ResumenGenerator({ materias = [], archivos = [], clases 
             </div>
           )}
           {archivoSeleccionado?.tipo === 'video' && !texto && !extrayendo && (
-            <div className="mt-3 text-sm text-orange-700 bg-orange-50 p-3 rounded-lg flex items-start gap-2">
-              <span className="text-lg leading-none">⚠️</span>
-              <span>
-                No se pudo extraer la transcripcion automaticamente. Se abrio el video para que copies el contenido manualmente.
-              </span>
+            <div className="mt-3 text-sm text-blue-700 bg-blue-50 p-4 rounded-lg">
+              <p className="font-medium mb-2">Se abrio el video en otra pestaña. Segui estos pasos:</p>
+              <ol className="list-decimal list-inside space-y-1 text-blue-600">
+                <li>Hace click en <strong>"Transcripcion"</strong> (arriba del video)</li>
+                <li>Se abre un panel con todo el texto a la derecha</li>
+                <li>Hace click en el panel y presiona <strong>Ctrl+A</strong> (seleccionar todo)</li>
+                <li>Presiona <strong>Ctrl+C</strong> (copiar)</li>
+                <li>Volve aca y usa el boton <strong>"Pegar contenido"</strong> abajo</li>
+              </ol>
+              <p className="text-xs text-blue-400 mt-2">Las marcas de tiempo se ignoran automaticamente.</p>
             </div>
           )}
         </div>
