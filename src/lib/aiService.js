@@ -1,5 +1,8 @@
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY
 
+// Limit ~4500 tokens input (~18000 chars) to stay under Groq free tier 6000 TPM
+const MAX_CHARS = 18000
+
 const prompts = {
   resumen: (texto) =>
     `Sos un asistente académico experto para un estudiante de Comercio Internacional.
@@ -57,12 +60,28 @@ Contenido:
 ${texto}`,
 }
 
+function limpiarTranscripcion(texto) {
+  // Remove timestamps like 0:03, 1:42, 12:05, etc.
+  return texto
+    .replace(/\b\d{1,2}:\d{2}\b/g, '')
+    .replace(/\n\s*\n/g, '\n')
+    .replace(/  +/g, ' ')
+    .trim()
+}
+
 export async function generarResumen(texto, tipo = 'resumen') {
   if (!GROQ_API_KEY) {
     throw new Error('Falta configurar VITE_GROQ_API_KEY en el archivo .env')
   }
 
-  const prompt = prompts[tipo]?.(texto) || prompts.resumen(texto)
+  // Clean timestamps and trim to fit API limits
+  let textoLimpio = limpiarTranscripcion(texto)
+
+  if (textoLimpio.length > MAX_CHARS) {
+    textoLimpio = textoLimpio.slice(0, MAX_CHARS) + '\n\n[Texto cortado por limite de longitud]'
+  }
+
+  const prompt = prompts[tipo]?.(textoLimpio) || prompts.resumen(textoLimpio)
 
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -73,7 +92,7 @@ export async function generarResumen(texto, tipo = 'resumen') {
     body: JSON.stringify({
       model: 'llama-3.1-8b-instant',
       messages: [{ role: 'user', content: prompt }],
-      max_tokens: 3000,
+      max_tokens: 2000,
       temperature: 0.4,
     }),
   })
