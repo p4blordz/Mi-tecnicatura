@@ -9,7 +9,9 @@ import ArchivoUploader from '../components/archivos/ArchivoUploader'
 import ArchivoList from '../components/archivos/ArchivoList'
 import ResumenGenerator from '../components/resumenes/ResumenGenerator'
 import ResumenList from '../components/resumenes/ResumenList'
-import { ArrowLeft, Video, FileText, Brain, Plus, ExternalLink } from 'lucide-react'
+import NotasClase from '../components/notas/NotasClase'
+import MateriaForm from '../components/materias/MateriaForm'
+import { ArrowLeft, Video, FileText, Brain, Plus, ExternalLink, Radio, Pencil } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const TABS = [
@@ -24,6 +26,8 @@ export default function MateriaDetailPage() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState('clases')
   const [showClaseForm, setShowClaseForm] = useState(false)
+  const [claseNotasId, setClaseNotasId] = useState(null)
+  const [showEditMateria, setShowEditMateria] = useState(false)
 
   const { clases, createClase, toggleVisto, deleteClase } = useClases(id)
   const { archivos, uploadArchivo, addLink, editArchivo, deleteArchivo, getDownloadUrl } = useArchivos(id)
@@ -52,6 +56,61 @@ export default function MateriaDetailPage() {
     if (url) window.open(url, '_blank')
   }
 
+  const handleEditMateria = async (form) => {
+    const { data, error } = await supabase
+      .from('materias')
+      .update(form)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      toast.error('Error al actualizar materia')
+    } else {
+      setMateria(data)
+      toast.success('Materia actualizada')
+    }
+  }
+
+  const handleClaseEnVivo = async () => {
+    window.open(materia.link_zoom, '_blank')
+    setTab('clases')
+
+    // Check if there's already a class with today's date
+    const hoy = new Date().toISOString().split('T')[0]
+    const claseHoy = clases.find((c) => c.fecha === hoy)
+
+    if (claseHoy) {
+      // Class for today already exists, just open its notes
+      setClaseNotasId(claseHoy.id)
+    } else {
+      // Auto-create new class: next number, date = last date + 7 days or today
+      const nextNumero = clases.length > 0 ? Math.max(...clases.map((c) => c.numero_clase)) + 1 : 1
+      let fecha = hoy
+      if (clases.length > 0) {
+        const ultimaFecha = clases[clases.length - 1].fecha
+        if (ultimaFecha) {
+          const d = new Date(ultimaFecha)
+          d.setDate(d.getDate() + 7)
+          fecha = d.toISOString().split('T')[0]
+        }
+      }
+
+      const nuevaClase = await createClase({
+        numero_clase: nextNumero,
+        fecha,
+        titulo: '',
+        link_video: '',
+        descripcion: '',
+      })
+
+      if (nuevaClase) {
+        setClaseNotasId(nuevaClase.id)
+        toast.success(`Clase ${nextNumero} creada`)
+      }
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -78,6 +137,13 @@ export default function MateriaDetailPage() {
             style={{ backgroundColor: materia.color || '#3B82F6' }}
           />
           <h1 className="text-2xl font-bold text-gray-800">{materia.nombre}</h1>
+          <button
+            onClick={() => setShowEditMateria(true)}
+            className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors cursor-pointer"
+            title="Editar materia"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
         </div>
         <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
           {materia.profesor && <span>Prof. {materia.profesor}</span>}
@@ -98,6 +164,15 @@ export default function MateriaDetailPage() {
             </a>
           )}
         </div>
+        {materia.link_zoom && (
+          <button
+            onClick={handleClaseEnVivo}
+            className="mt-3 flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors cursor-pointer text-sm font-medium"
+          >
+            <Radio className="w-4 h-4" />
+            Clase en vivo
+          </button>
+        )}
       </div>
 
       {/* Tabs */}
@@ -146,12 +221,22 @@ export default function MateriaDetailPage() {
           ) : (
             <div className="space-y-2">
               {clases.map((clase) => (
-                <ClaseLink
-                  key={clase.id}
-                  clase={clase}
-                  onToggleVisto={toggleVisto}
-                  onDelete={deleteClase}
-                />
+                <div key={clase.id} className="space-y-2">
+                  <ClaseLink
+                    clase={clase}
+                    onToggleVisto={toggleVisto}
+                    onDelete={deleteClase}
+                    onNotas={(id) => setClaseNotasId(claseNotasId === id ? null : id)}
+                    notasActivas={claseNotasId === clase.id}
+                  />
+                  {claseNotasId === clase.id && (
+                    <NotasClase
+                      claseId={clase.id}
+                      claseLabel={`Clase ${clase.numero_clase}${clase.titulo ? ` - ${clase.titulo}` : ''}`}
+                      onClose={() => setClaseNotasId(null)}
+                    />
+                  )}
+                </div>
               ))}
             </div>
           )}
@@ -181,6 +266,14 @@ export default function MateriaDetailPage() {
           />
           <ResumenList resumenes={resumenes} onDelete={deleteResumen} />
         </div>
+      )}
+
+      {showEditMateria && (
+        <MateriaForm
+          materia={materia}
+          onSubmit={handleEditMateria}
+          onClose={() => setShowEditMateria(false)}
+        />
       )}
     </div>
   )

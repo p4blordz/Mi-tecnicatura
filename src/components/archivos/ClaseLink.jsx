@@ -1,8 +1,8 @@
-import { Video, ExternalLink, Trash2, CheckCircle, Circle } from 'lucide-react'
+import { Video, ExternalLink, Trash2, CheckCircle, Circle, StickyNote } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
-export default function ClaseLink({ clase, onToggleVisto, onDelete }) {
+export default function ClaseLink({ clase, onToggleVisto, onDelete, onNotas, notasActivas }) {
   return (
     <div className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
       <button
@@ -31,6 +31,15 @@ export default function ClaseLink({ clase, onToggleVisto, onDelete }) {
       </div>
 
       <div className="flex items-center gap-1">
+        <button
+          onClick={() => onNotas(clase.id)}
+          className={`p-2 transition-colors cursor-pointer ${
+            notasActivas ? 'text-amber-500' : 'text-gray-400 hover:text-amber-500'
+          }`}
+          title="Apuntes"
+        >
+          <StickyNote className="w-4 h-4" />
+        </button>
         {clase.link_video && (
           <a
             href={clase.link_video}

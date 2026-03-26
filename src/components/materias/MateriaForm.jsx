@@ -14,6 +14,7 @@ export default function MateriaForm({ materia = null, onSubmit, onClose }) {
     horario_fin: materia?.horario_fin || '',
     color: materia?.color || '#3B82F6',
     link_classroom: materia?.link_classroom || '',
+    link_zoom: materia?.link_zoom || '',
     notas: materia?.notas || '',
   })
   const [loading, setLoading] = useState(false)
@@ -134,6 +135,17 @@ export default function MateriaForm({ materia = null, onSubmit, onClose }) {
               onChange={(e) => update('link_classroom', e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="https://classroom.google.com/..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Link a Zoom</label>
+            <input
+              type="url"
+              value={form.link_zoom}
+              onChange={(e) => update('link_zoom', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="https://zoom.us/j/..."
             />
           </div>
 
