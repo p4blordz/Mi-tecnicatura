@@ -93,30 +93,24 @@ async function extractFromGoogle(google) {
   let exportUrl, fileType;
 
   if (google.type === 'slides') {
-    // Try multiple export formats for Google Slides
-    const formats = [
-      { url: `https://docs.google.com/presentation/d/${google.id}/export/pptx`, type: 'pptx' },
-      { url: `https://docs.google.com/presentation/d/${google.id}/export/pdf`, type: 'pdf' },
-      { url: `https://docs.google.com/presentation/d/${google.id}/export?format=txt`, type: 'txt' },
-    ];
-    for (const fmt of formats) {
-      try {
-        const resp = await fetch(fmt.url, { redirect: 'follow' });
-        if (!resp.ok) continue;
+    // 1. Try PPTX export (works when downloads are allowed)
+    try {
+      const resp = await fetch(`https://docs.google.com/presentation/d/${google.id}/export/pptx`, { redirect: 'follow' });
+      if (resp.ok) {
         const ct = resp.headers.get('content-type') || '';
-        if (ct.includes('text/html') && fmt.type !== 'txt') continue;
-        if (fmt.type === 'txt') {
-          const text = await resp.text();
-          if (text && !text.includes('<!DOCTYPE') && !text.includes('<html')) return text;
-          continue;
+        if (!ct.includes('text/html')) {
+          const buf = Buffer.from(await resp.arrayBuffer());
+          return await extractPptx(buf);
         }
-        const buf = Buffer.from(await resp.arrayBuffer());
-        if (fmt.type === 'pptx') return await extractPptx(buf);
-        if (fmt.type === 'pdf') return await extractPdf(buf);
-      } catch {
-        continue;
       }
-    }
+    } catch {}
+
+    // 2. Downloads blocked - scrape text from the HTML preview page
+    try {
+      const text = await scrapeGoogleSlidesHtml(google.id);
+      if (text && text.length > 20) return text;
+    } catch {}
+
     return null;
   } else if (google.type === 'docs') {
     // Export Google Docs as plain text
@@ -177,6 +171,77 @@ async function extractFromGoogle(google) {
   }
 
   return null;
+}
+
+async function scrapeGoogleSlidesHtml(id) {
+  // Fetch the HTML embed/preview page - text is visible even when downloads are disabled
+  const resp = await fetch(
+    `https://docs.google.com/presentation/d/${id}/preview`,
+    { redirect: 'follow', headers: { 'User-Agent': 'Mozilla/5.0' } }
+  );
+  if (!resp.ok) return null;
+
+  const html = await resp.text();
+
+  // Skip if it's a login page or error
+  if (html.includes('accounts.google.com/ServiceLogin') || html.length < 1000) {
+    return null;
+  }
+
+  const allTexts = [];
+
+  // Pattern 1: aria-label attributes on slide elements (accessibility text)
+  const ariaRegex = /aria-label="([^"]{3,})"/g;
+  let m;
+  while ((m = ariaRegex.exec(html)) !== null) {
+    const t = decodeHtmlEntities(m[1]).trim();
+    // Skip generic UI labels
+    if (t && !t.match(/^(Slide \d|slide|menu|button|close|open|Diapositiva)/i)) {
+      allTexts.push(t);
+    }
+  }
+
+  // Pattern 2: Text inside <span> tags with style (slide text content)
+  const spanRegex = /<span[^>]*style="[^"]*font-size[^"]*"[^>]*>([^<]+)<\/span>/g;
+  while ((m = spanRegex.exec(html)) !== null) {
+    const t = decodeHtmlEntities(m[1]).trim();
+    if (t && t.length > 1) {
+      allTexts.push(t);
+    }
+  }
+
+  // Pattern 3: Text in SVG <text> elements
+  const svgTextRegex = /<text[^>]*>([^<]+)<\/text>/g;
+  while ((m = svgTextRegex.exec(html)) !== null) {
+    const t = decodeHtmlEntities(m[1]).trim();
+    if (t && t.length > 1) {
+      allTexts.push(t);
+    }
+  }
+
+  // Deduplicate while preserving order
+  const seen = new Set();
+  const unique = [];
+  for (const t of allTexts) {
+    if (!seen.has(t)) {
+      seen.add(t);
+      unique.push(t);
+    }
+  }
+
+  return unique.length > 0 ? unique.join('\n') : null;
+}
+
+function decodeHtmlEntities(str) {
+  return str
+    .replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num)))
+    .replace(/&#x([a-fA-F0-9]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ');
 }
 
 async function extractPdf(buffer) {

@@ -285,12 +285,23 @@ export default function ResumenGenerator({ materias = [], archivos = [], clases 
                 : 'Extrayendo texto del archivo...'}
             </div>
           )}
-          {archivoSeleccionado?.tipo === 'link' && (!esGoogleDoc(archivoSeleccionado?.url_publica) || extractionFailed) && !texto && !extrayendo && (
+          {archivoSeleccionado?.tipo === 'link' && !esGoogleDoc(archivoSeleccionado?.url_publica) && !texto && !extrayendo && (
             <div className="mt-3 text-sm text-purple-700 bg-purple-50 p-3 rounded-lg flex items-start gap-2">
               <span className="text-lg leading-none">👆</span>
               <span>
                 Se abrio el link en otra pestaña. <strong>Selecciona todo el contenido</strong> (Ctrl+A), <strong>copialo</strong> (Ctrl+C) y despues usa el boton <strong>"Pegar contenido"</strong> abajo.
               </span>
+            </div>
+          )}
+          {archivoSeleccionado?.tipo === 'link' && esGoogleDoc(archivoSeleccionado?.url_publica) && extractionFailed && !texto && !extrayendo && (
+            <div className="mt-3 text-sm text-indigo-700 bg-indigo-50 p-4 rounded-lg">
+              <p className="font-medium mb-2">No se pudo extraer automaticamente. Proba estos pasos:</p>
+              <ol className="list-decimal list-inside space-y-1 text-indigo-600">
+                <li>En la presentacion, anda a <strong>Archivo &gt; Hacer una copia</strong></li>
+                <li>Desde tu copia: <strong>Archivo &gt; Descargar &gt; Texto sin formato (.txt)</strong></li>
+                <li>Abri el archivo descargado, copia todo el texto y <strong>pegalo aca abajo</strong></li>
+              </ol>
+              <p className="text-xs text-indigo-400 mt-2">Si no aparece "Hacer una copia", selecciona el texto de cada diapositiva manualmente.</p>
             </div>
           )}
           {archivoSeleccionado?.tipo === 'video' && !texto && !extrayendo && (
