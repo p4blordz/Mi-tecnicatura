@@ -348,6 +348,7 @@ export default function ResumenGenerator({ materias = [], archivos = [], clases 
               className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="resumen">Resumen general</option>
+              <option value="guia">Guia de estudio</option>
               <option value="conceptos">Conceptos clave</option>
               <option value="preguntas">Preguntas de repaso</option>
             </select>

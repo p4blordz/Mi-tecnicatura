@@ -58,6 +58,31 @@ FORMATO OBLIGATORIO (usá markdown rico):
 
 Contenido:
 ${texto}`,
+
+  guia: (texto) =>
+    `Sos un asistente académico experto para un estudiante de Comercio Internacional.
+Creá una guía de estudio completa y detallada basada en el siguiente contenido. NO resumas brevemente, desarrollá cada tema en profundidad para que el estudiante pueda estudiar directamente de esta guía.
+
+FORMATO OBLIGATORIO (usá markdown rico):
+- Título principal con ## "Guía de Estudio"
+- Usá ### para cada tema o unidad temática
+- Para cada tema:
+  - Explicación completa y detallada (no resumida) del concepto
+  - Usá **negrita** para términos clave
+  - Usá > blockquotes para definiciones formales
+  - Incluí ejemplos prácticos cuando sea posible
+  - Si hay procedimientos o pasos, numeralos con 1. 2. 3.
+- Si hay datos numéricos o comparaciones, usalos en tablas markdown
+- Separá los temas con líneas horizontales (---)
+- Al final incluí:
+  - "📝 Temas que probablemente entren en el examen" con los puntos más importantes
+  - "⚠️ Errores comunes" con conceptos que suelen confundirse
+  - "🔗 Conexiones entre temas" explicando cómo se relacionan los conceptos
+
+IMPORTANTE: Sé extenso y detallado. Esta guía reemplaza tener que leer el material original.
+
+Contenido:
+${texto}`,
 }
 
 function limpiarTranscripcion(texto) {
@@ -112,6 +137,26 @@ export async function obtenerTranscripcion(videoUrl) {
 
   if (!response.ok) {
     throw new Error(data.error || 'Error al obtener la transcripcion')
+  }
+
+  return data.text
+}
+
+export async function extraerTextoArchivo(url, tipo) {
+  const response = await fetch(`/api/extract-text?url=${encodeURIComponent(url)}&type=${tipo}`)
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(data.error || 'Error al extraer texto del archivo')
+  }
+  return data.text
+}
+
+export async function obtenerTranscripcionDrive(driveUrl) {
+  const response = await fetch(`/api/drive-transcript?url=${encodeURIComponent(driveUrl)}`)
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Error al obtener la transcripcion del video')
   }
 
   return data.text
