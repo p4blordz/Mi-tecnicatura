@@ -295,13 +295,12 @@ export default function ResumenGenerator({ materias = [], archivos = [], clases 
           )}
           {archivoSeleccionado?.tipo === 'link' && esGoogleDoc(archivoSeleccionado?.url_publica) && extractionFailed && !texto && !extrayendo && (
             <div className="mt-3 text-sm text-indigo-700 bg-indigo-50 p-4 rounded-lg">
-              <p className="font-medium mb-2">No se pudo extraer automaticamente. Proba estos pasos:</p>
+              <p className="font-medium mb-2">El archivo requiere tu cuenta de Google. Segui estos pasos:</p>
               <ol className="list-decimal list-inside space-y-1 text-indigo-600">
-                <li>En la presentacion, anda a <strong>Archivo &gt; Hacer una copia</strong></li>
-                <li>Desde tu copia: <strong>Archivo &gt; Descargar &gt; Texto sin formato (.txt)</strong></li>
-                <li>Abri el archivo descargado, copia todo el texto y <strong>pegalo aca abajo</strong></li>
+                <li>En la presentacion: <strong>Archivo &gt; Descargar &gt; Texto sin formato (.txt)</strong></li>
+                <li>Abri el archivo .txt descargado con Bloc de notas</li>
+                <li>Selecciona todo (<strong>Ctrl+A</strong>), copia (<strong>Ctrl+C</strong>) y usa <strong>"Pegar contenido"</strong> abajo</li>
               </ol>
-              <p className="text-xs text-indigo-400 mt-2">Si no aparece "Hacer una copia", selecciona el texto de cada diapositiva manualmente.</p>
             </div>
           )}
           {archivoSeleccionado?.tipo === 'video' && !texto && !extrayendo && (
