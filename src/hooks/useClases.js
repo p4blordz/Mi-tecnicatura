@@ -57,7 +57,7 @@ export function useClases(materiaId, materiaTemplateId = null) {
           byKey.set(key, c)
         }
       }
-      setClases([...byKey.values()].sort((a, b) => a.numero_clase - b.numero_clase))
+      setClases([...byKey.values()].sort((a, b) => a.numero_clase - b.numero_clase || (a.titulo || '').localeCompare(b.titulo || '')))
     }
     setLoading(false)
   }, [user, materiaId, materiaTemplateId])
@@ -78,7 +78,7 @@ export function useClases(materiaId, materiaTemplateId = null) {
       return null
     }
     toast.success('Clase agregada')
-    setClases((prev) => [...prev, data].sort((a, b) => a.numero_clase - b.numero_clase))
+    setClases((prev) => [...prev, data].sort((a, b) => a.numero_clase - b.numero_clase || (a.titulo || '').localeCompare(b.titulo || '')))
     return data
   }
 
@@ -94,7 +94,7 @@ export function useClases(materiaId, materiaTemplateId = null) {
       toast.error('Error al actualizar clase')
       return null
     }
-    setClases((prev) => prev.map((c) => (c.id === id ? data : c)).sort((a, b) => a.numero_clase - b.numero_clase))
+    setClases((prev) => prev.map((c) => (c.id === id ? data : c)).sort((a, b) => a.numero_clase - b.numero_clase || (a.titulo || '').localeCompare(b.titulo || '')))
     return data
   }
 
