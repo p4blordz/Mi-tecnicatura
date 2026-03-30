@@ -30,34 +30,14 @@ export function useClases(materiaId, materiaTemplateId = null) {
     if (error) {
       toast.error('Error al cargar clases')
     } else {
-      // Deduplicate shared classes: when two users have the same class
-      // (same numero_clase AND same or empty titulo), keep the main contributor's version.
-      // Classes with different titles (e.g. "PARTE 1" vs "PARTE 2") are NOT duplicates.
+      // Shared classes logic:
+      // 1. Always show all YOUR classes
+      // 2. Only show shared classes from others for numero_clase values
+      //    where you have NO classes of your own
       const all = data || []
-      const countByUser = {}
-      for (const c of all) {
-        countByUser[c.user_id] = (countByUser[c.user_id] || 0) + 1
-      }
-      let mainUserId = user.id
-      let maxCount = countByUser[user.id] || 0
-      for (const [uid, count] of Object.entries(countByUser)) {
-        if (count > maxCount) {
-          maxCount = count
-          mainUserId = uid
-        }
-      }
-      // Dedup key = numero_clase + normalized titulo
-      const dedupKey = (c) => `${c.numero_clase}::${(c.titulo || '').trim().toLowerCase()}`
-      const byKey = new Map()
-      for (const c of all) {
-        const key = dedupKey(c)
-        if (!byKey.has(key)) {
-          byKey.set(key, c)
-        } else if (c.user_id === mainUserId && byKey.get(key).user_id !== mainUserId) {
-          byKey.set(key, c)
-        }
-      }
-      setClases([...byKey.values()].sort((a, b) => a.numero_clase - b.numero_clase || (a.titulo || '').localeCompare(b.titulo || '')))
+      const myNums = new Set(all.filter(c => c.user_id === user.id).map(c => c.numero_clase))
+      const filtered = all.filter(c => c.user_id === user.id || !myNums.has(c.numero_clase))
+      setClases(filtered.sort((a, b) => a.numero_clase - b.numero_clase || (a.titulo || '').localeCompare(b.titulo || '')))
     }
     setLoading(false)
   }, [user, materiaId, materiaTemplateId])
